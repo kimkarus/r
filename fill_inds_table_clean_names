@@ -1,0 +1,145 @@
+In <- function(
+  prc = price, 
+  p = 14, 
+  isIndsPrc=FALSE, 
+  isPrcDif=FALSE, 
+  col_index=1, 
+  isIndsRsi=FALSE
+){
+  f<-0;
+  #o,  h,  l,  c
+  co<-prc[,'CO']
+  dif_co<-specDiff(prc[,'CO'])
+  f <- cbind(dif_co)
+  len<-length(prc)
+  if(isPrcDif)
+  {
+    dif_hi<-specDiff(prc[,2])
+    dif_lo<-specDiff(prc[,3])
+    dif_cl<-specDiff(prc[,4])
+    dif_med<-specDiff(prc[,'Med'])
+    #
+    shup<-prc[,'SHUP']
+    shdn<-prc[,'SHDN']
+    #
+    dif_shup<-specDiff(prc[,'SHUP'])
+    dif_shdn<-specDiff(prc[,'SHDN'])
+    dif_vl<-specDiff(prc[,'Volume'])
+    dif_op<-specDiff(prc[,1])
+    #f <- cbind(
+    #  co, shup, shdn
+    #);
+    f <- cbind(f,
+               dif_hi, 
+               dif_lo,
+               dif_cl, 
+               dif_med, 
+               dif_shup, 
+               dif_shdn,
+               dif_vl,
+               dif_op
+#                shup,
+#                shdn
+    );
+  }
+  
+  if(isIndsPrc)
+  {
+    if(isIndsRsi){
+      f<-cbind(f, getPrcIndsRsi(prc, p))
+    } else
+    {
+      f<-cbind(f, getPrcInds(prc, p))
+    }
+    
+  }
+  nCols<-1:ncol(f)
+  #library(stringr)
+  for(i in nCols)
+  {
+    name<-paste(col_index,i,"")
+    name<-toString(name)
+    name<-gsub(" ", "", name, fixed = TRUE)
+    name<-toString(name)
+    colnames(f)[i]<-name
+  }
+  return(f)
+}
+
+specDiff<-function(pr)
+{
+  p1<-pr
+  p2<-arrayLast(p1)
+  dif<-p1/p2-1
+  #dif<-c(NA,dif)
+  #dif<-arrayLast(dif)
+  dif[!is.finite(dif)] <- 0
+  #dif[!is.na(dif)] <- 0
+  return(dif)
+}
+
+getPrcIndsRsi <- function(prc, p){
+  
+  rsi <- RSI(prc[ ,'Med'], n = p)
+  
+  f <- cbind(rsi
+  );
+  
+  return(f);
+  
+}
+
+getPrcInds <- function(prc, p){
+  
+  #adx<-arrayNA(n = len)
+  adx <- ADX(prc, n = p)
+  ar <- aroon(prc[ ,c('High', 'Low')], n = p)[ ,'oscillator']
+  cci <- CCI(prc[ ,2:4], n = p)
+  cci_14 <- CCI(prc[ ,2:4], 14)
+  cci_34 <- CCI(prc[ ,2:4], 34)
+  #cci_50 <- CCI(prc[ ,2:4], 50)
+  #cci_100 <- CCI(prc[ ,2:4], 100)
+  #cci_150 <- CCI(prc[ ,2:4], 150)
+  
+  chv <- chaikinVolatility(prc[ ,2:4], n = p)
+  cmo <- CMO(prc[ ,'Med'], n = p)
+  macd <- MACD(prc[ ,'Med'], 12, 26, 9)[ ,'macd']
+  osma <- macd - MACD(prc[ ,'Med'],12, 26, 9)[ ,'signal']
+  rsi <- RSI(prc[ ,'Med'], n = p)
+  rsi_10 <- RSI(prc[ ,4], 10)
+  rsi_14 <- RSI(prc[ ,4], 14)
+  rsi_15 <- RSI(prc[ ,4], 15)
+  rsi_28 <- RSI(prc[ ,4], 28)
+  rsi_29 <- RSI(prc[ ,4], 29)
+  stoh_5 <- stoch(prc[ ,2:4], 5, 3, 3)
+  stoh_14 <- stoch(prc[ ,2:4], 14, 3, 3)
+  stoh_14_7 <- stoch(prc[ ,2:4], 14, 7, 3)
+  smi <- SMI(prc[ ,2:4],n = p, nFast = 2, nSlow = 25, nSig = 9)
+  
+  vol2 <- prc[,2] - prc[,3]
+  #tryCatch(
+  #  vol <- volatility(prc[ ,1:4], n = p, calc="yang.zhang", N=96),
+  #  vol <- prc[,2] - prc[,3])
+  vl <- prc[,'Volume']
+  #vol <- volatility(prc[ ,1:4], n = p, calc="yang.zhang", N=96)
+  
+  #MA
+  ema_p<-EMA(prc[,4], p)
+  ema_9<-EMA(prc[,4],9)
+  ema_13<-EMA(prc[,4],13)
+  ema_21<-EMA(prc[,4],21)
+  ema_22<-EMA(prc[,4],22)
+  ema_34<-EMA(prc[,4],34)
+  #ema_144<-EMA(prc[,4],144)
+  smam_p<-SMA(prc[,4], p)
+  smam1_5<-SMA(prc[,4],5)
+  #smam1_100<-SMA(prc[,4],100)
+  
+  
+
+      #f <- cbind(adx,ar,cci,chv,cmo,macd,rsi,smi,vl,vol2,ema_p,smam_p,osma,stoh_5);
+      f <- cbind(adx,ar,cci,cci_14,cci_34,chv,cmo,macd,rsi,rsi_10,rsi_14,rsi_15,rsi_28,rsi_29,smi,vl,vol2,ema_p,ema_9,ema_13,ema_21,ema_22,ema_34,smam_p,smam1_5,osma,stoh_5,stoh_14,stoh_14_7);
+
+  return(f);
+  
+}
